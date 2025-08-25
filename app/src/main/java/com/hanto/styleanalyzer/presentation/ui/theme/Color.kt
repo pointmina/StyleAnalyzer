@@ -1,4 +1,4 @@
-package com.hanto.styleanalyzer.ui.theme
+package com.hanto.styleanalyzer.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
