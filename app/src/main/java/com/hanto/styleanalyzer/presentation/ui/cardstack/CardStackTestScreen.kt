@@ -471,19 +471,19 @@ private fun CompletionCard(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = likeCount.toString(),
+                            text = dislikeCount.toString(),
                             style = MaterialTheme.typography.headlineMedium,
-                            color = MinimalColors.AccentGreen,
+                            color = MinimalColors.AccentRed,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "LIKES",
+                            text = "PASS",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
                         )
                     }
-
+                    
                     Text(
                         text = "/",
                         style = MaterialTheme.typography.headlineMedium,
@@ -492,13 +492,13 @@ private fun CompletionCard(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = dislikeCount.toString(),
+                            text = likeCount.toString(),
                             style = MaterialTheme.typography.headlineMedium,
-                            color = MinimalColors.AccentRed,
+                            color = MinimalColors.AccentGreen,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "PASS",
+                            text = "LIKES",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
