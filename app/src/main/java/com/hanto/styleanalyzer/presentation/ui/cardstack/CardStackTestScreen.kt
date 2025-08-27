@@ -2,7 +2,6 @@ package com.hanto.styleanalyzer.presentation.ui.cardstack
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,16 +46,19 @@ import com.hanto.styleanalyzer.presentation.ui.common.cardstack.CardAlignment
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.DragAlignment
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.DraggableCardStack
 import com.hanto.styleanalyzer.presentation.ui.theme.MinimalColors
+import com.hanto.styleanalyzer.presentation.viewmodel.StyleTestViewModel
 
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun CardStackTestScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: StyleTestViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     var likeCount by remember { mutableIntStateOf(0) }
     var dislikeCount by remember { mutableIntStateOf(0) }
-    var currentItems by remember { mutableStateOf(SampleData.getShuffledItems()) }
+    val currentItems = viewModel.displayItems
+    val currentSession = viewModel.currentSession
     var lastSwipedItem by remember { mutableStateOf<FashionItem?>(null) }
 
     // 반응형 설정
@@ -76,7 +78,6 @@ fun CardStackTestScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // 메인 컨텐츠
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -122,7 +123,7 @@ fun CardStackTestScreen(
             ) {
                 StatCard(
                     icon = Icons.Default.Close,
-                    count = dislikeCount,
+                    count = currentSession.dislikeCount,
                     label = "PASS",
                     color = MinimalColors.AccentRed,
                     isCompact = isSmallScreen,
@@ -130,7 +131,7 @@ fun CardStackTestScreen(
                 )
                 StatCard(
                     icon = Icons.Default.Favorite,
-                    count = likeCount,
+                    count = currentSession.likeCount,
                     label = "LIKE",
                     color = MinimalColors.AccentGreen,
                     isCompact = isSmallScreen,
@@ -140,8 +141,8 @@ fun CardStackTestScreen(
 
             // 진행률 표시
             if (!isSmallScreen) {
-                val totalItems = SampleData.sampleFashionItems.size
-                val processedItems = likeCount + dislikeCount
+                val totalItems = currentSession.totalItems
+                val processedItems = currentSession.completedCount
                 val progress = if (totalItems > 0) processedItems.toFloat() / totalItems else 0f
 
                 ProgressIndicator(
@@ -166,12 +167,10 @@ fun CardStackTestScreen(
                         cardAlignment = CardAlignment.BOTTOM,
                         dragAlignment = DragAlignment.HORIZONTAL,
                         onSwipeLeft = { item ->
-                            dislikeCount++
-                            lastSwipedItem = item
+                            viewModel.onSwipeLeft(item)
                         },
                         onSwipeRight = { item ->
-                            likeCount++
-                            lastSwipedItem = item
+                            viewModel.onSwipeRight(item)
                         }
                     ) { fashionItem ->
                         FashionCard(
@@ -182,8 +181,8 @@ fun CardStackTestScreen(
                 } else {
                     // 완료 화면
                     CompletionCard(
-                        likeCount = likeCount,
-                        dislikeCount = dislikeCount,
+                        likeCount = currentSession.likeCount,
+                        dislikeCount = currentSession.dislikeCount,
                         cardHeight = cardHeight,
                         isCompact = isSmallScreen
                     )

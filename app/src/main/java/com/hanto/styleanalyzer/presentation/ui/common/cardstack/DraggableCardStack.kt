@@ -262,7 +262,7 @@ private fun DraggableCard(
 
                                 coroutineScope.launch {
                                     isAnimating = true
-                                    if (shouldSwipe && direction != null) {
+                                    if (shouldSwipe) {
                                         val targetOffset = calculateTargetOffset(
                                             direction = direction,
                                             size = size,

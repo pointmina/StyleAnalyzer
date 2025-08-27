@@ -1,6 +1,8 @@
 package com.hanto.styleanalyzer.domain.model
 
 import android.os.Parcelable
+import com.hanto.styleanalyzer.domain.util.IdGenerator.generateActionId
+import com.hanto.styleanalyzer.domain.util.IdGenerator.generateSessionId
 import kotlinx.parcelize.Parcelize
 
 /**
@@ -53,7 +55,6 @@ data class StyleTestResult(
     val completedAt: Long = System.currentTimeMillis()
 ) : Parcelable
 
-
 /**
  * 아이템 카테고리
  */
@@ -93,18 +94,49 @@ enum class FitType {
 }
 
 /**
- * 스와이프 액션 결과
- */
-@Parcelize
-data class SwipeAction(
-    val itemId: String,
-    val action: SwipeType,
-    val timestamp: Long = System.currentTimeMillis()
-) : Parcelable
-
-/**
  * 스와이프 타입
  */
 enum class SwipeType {
     LIKE, DISLIKE
+}
+
+/**
+ * 스와이프 액션 결과
+ */
+@Parcelize
+data class SwipeAction(
+    val id: String = generateActionId(),
+    val itemId: String,
+    val item: FashionItem,
+    val action: SwipeType,
+    val sessionId: String,
+    val timestamp: Long = System.currentTimeMillis()
+) : Parcelable
+
+/**
+ * 스타일 테스트 세션
+ */
+@Parcelize
+data class TestSession(
+    val sessionId: String = generateSessionId(),
+    val totalItems: Int,
+    val swipeActions: List<SwipeAction> = emptyList(),
+    val startTime: Long = System.currentTimeMillis(),
+    val isCompleted: Boolean = false
+) : Parcelable {
+
+    /**
+     * 완료된 아이템 수
+     */
+    val completedCount: Int get() = swipeActions.size
+
+    /**
+     * 좋아요 수
+     */
+    val likeCount: Int get() = swipeActions.count { it.action == SwipeType.LIKE }
+
+    /**
+     * 싫어요 수
+     */
+    val dislikeCount: Int get() = swipeActions.count { it.action == SwipeType.DISLIKE }
 }
