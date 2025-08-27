@@ -42,10 +42,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * StyleAnalyzer용 DraggableCardStack
- * 패션 아이템 카드들을 스와이프할 수 있는 스택 형태로 표시합니다
  *
- * @param initialItems 초기 아이템 리스트
+ * @param items 현재 아이템 리스트 (외부 상태와 동기화)
  * @param height 각 카드의 높이
  * @param cardSpacingRatio 카드 간격 비율 (화면 높이 기준)
  * @param cardAlignment 카드 정렬 방식
@@ -56,7 +54,7 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun <T> DraggableCardStack(
-    initialItems: List<T>,
+    items: List<T>,
     height: Dp,
     cardSpacingRatio: Float = 0.1f,
     cardAlignment: CardAlignment = CardAlignment.BOTTOM,
@@ -65,15 +63,14 @@ fun <T> DraggableCardStack(
     onSwipeRight: ((T) -> Unit)? = null,
     cardContent: @Composable BoxScope.(T) -> Unit
 ) {
-    var items by remember { mutableStateOf(initialItems) }
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
 
-    val cardSpacing = remember(screenHeight) { screenHeight * (cardSpacingRatio * 0.1f) }
+    val cardSpacing = remember(screenHeight) { screenHeight * (cardSpacingRatio * 0.15f) }
     val velocityThreshold = remember(screenWidth, screenHeight) {
-        minOf(screenWidth, screenHeight) * 0.6f
+        minOf(screenWidth, screenHeight) * 0.3f
     }
 
     val stackedHeight by remember(items.size, cardSpacing, cardAlignment) {
@@ -109,47 +106,27 @@ fun <T> DraggableCardStack(
         contentAlignment = contentAlignment
     ) {
         items
-            .asReversed()
             .forEachIndexed { index, item ->
-                key(item) {
+                key("card_${item.hashCode()}") {
                     DraggableCard(
                         density = density,
                         height = height,
                         cardSpacing = cardSpacing,
                         velocityThreshold = velocityThreshold,
                         itemCount = items.size,
-                        index = items.size - 1 - index,
+                        index = index,
                         cardAlignment = cardAlignment,
                         dragAlignment = dragAlignment,
                         stackDragProgress = stackDragProgress,
                         onDrag = onDrag,
                         onSwipe = { direction ->
-                            val currentItem = items.lastOrNull()
+                            val currentItem = items.firstOrNull()
                             currentItem?.let {
                                 when (direction) {
                                     DragDirection.LEFT -> onSwipeLeft?.invoke(it)
                                     DragDirection.RIGHT -> onSwipeRight?.invoke(it)
-                                    else -> { /* 상하 스와이프는 처리하지 않음 */
-                                    }
+                                    else -> { /* 상하 스와이프는 처리하지 않음 */ }
                                 }
-                            }
-
-                            items = when (direction) {
-                                DragDirection.LEFT, DragDirection.DOWN -> items
-                                    .toMutableList()
-                                    .apply {
-                                        removeLastOrNull()?.let { removed ->
-                                            add(0, removed)
-                                        }
-                                    }
-
-                                DragDirection.RIGHT, DragDirection.UP -> items
-                                    .toMutableList()
-                                    .apply {
-                                        removeFirstOrNull()?.let { removed ->
-                                            add(removed)
-                                        }
-                                    }
                             }
                         },
                         content = { cardContent(item) }
@@ -194,14 +171,17 @@ private fun DraggableCard(
     val animatedOffset by transition.animateOffset(
         label = "offsetAnimation",
         transitionSpec = {
-            spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
         },
         targetValueByState = { it }
     )
 
     val animatedElevation by animateFloatAsState(
         targetValue = if (isAnimating) 8f else 4f,
-        animationSpec = tween(durationMillis = 200),
+        animationSpec = tween(durationMillis = 300),
         label = "animatedElevation"
     )
 
@@ -209,7 +189,10 @@ private fun DraggableCard(
     val animatedScale by transition.animateFloat(
         label = "scaleAnimation",
         transitionSpec = {
-            spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
         },
         targetValueByState = { targetScale }
     )
@@ -221,12 +204,17 @@ private fun DraggableCard(
 
     LaunchedEffect(swipeProgress) { updatedOnDrag(swipeProgress) }
 
+    LaunchedEffect(itemCount) {
+        offset = Offset.Zero
+        isAnimating = false
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
             .padding(horizontal = 12.dp)
-            .zIndex(itemCount.toFloat() - index)
+            .zIndex((itemCount - index).toFloat())
             .graphicsLayer {
                 scaleX = animatedScale
                 scaleY = animatedScale
@@ -236,11 +224,13 @@ private fun DraggableCard(
             }
             .shadow(elevation = animatedElevation.dp, shape = RoundedCornerShape(12.dp))
             .then(
-                if (!isAnimating && index == 0) { // 최상단 카드만 드래그 가능
-                    Modifier.pointerInput(Unit) {
+                if (!isAnimating && index == 0 && itemCount > 0) {
+                    Modifier.pointerInput(itemCount) {
                         val velocityTracker = VelocityTracker()
                         detectDragGestures(
-                            onDragStart = { velocityTracker.resetTracking() },
+                            onDragStart = {
+                                velocityTracker.resetTracking()
+                            },
                             onDrag = { change, dragAmount ->
                                 change.consume()
                                 offset += when (dragAlignment) {
@@ -255,10 +245,16 @@ private fun DraggableCard(
                                 val direction =
                                     determineSwipeDirection(velocity = velocity, offset = offset)
 
-                                val shouldSwipe = direction != null && isSwipeVelocityExceeded(
-                                    velocity = velocity,
-                                    velocityThresholdPx = velocityThresholdPx
-                                )
+
+                                val shouldSwipe = direction != null && (
+                                        isSwipeVelocityExceeded(
+                                            velocity = velocity,
+                                            velocityThresholdPx = velocityThresholdPx
+                                        ) ||
+                                                (direction == DragDirection.LEFT && offset.x < -size.width * 0.15f) ||
+                                                (direction == DragDirection.RIGHT && offset.x > size.width * 0.15f) ||
+                                                kotlin.math.abs(offset.y) > size.height * 0.25f
+                                        )
 
                                 coroutineScope.launch {
                                     isAnimating = true
@@ -270,11 +266,12 @@ private fun DraggableCard(
                                             cardAlignment = cardAlignment
                                         )
                                         offset = targetOffset
-                                        delay(10)
+                                        delay(150)
                                         updatedOnSwipe(direction)
+                                        delay(100)
                                     }
                                     offset = Offset.Zero
-                                    delay(10)
+                                    delay(50)
                                     isAnimating = false
                                 }
                             }

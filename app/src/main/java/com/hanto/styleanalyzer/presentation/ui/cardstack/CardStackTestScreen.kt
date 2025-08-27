@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.hanto.styleanalyzer.data.sample.SampleData
 import com.hanto.styleanalyzer.domain.model.FashionItem
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.CardAlignment
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.DragAlignment
@@ -55,8 +53,6 @@ fun CardStackTestScreen(
     modifier: Modifier = Modifier,
     viewModel: StyleTestViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    var likeCount by remember { mutableIntStateOf(0) }
-    var dislikeCount by remember { mutableIntStateOf(0) }
     val currentItems = viewModel.displayItems
     val currentSession = viewModel.currentSession
     var lastSwipedItem by remember { mutableStateOf<FashionItem?>(null) }
@@ -85,7 +81,7 @@ fun CardStackTestScreen(
                     horizontal = horizontalPadding,
                     vertical = 20.dp
                 )
-                .padding(bottom = 100.dp), // 하단 도움말 공간 확보
+                .padding(bottom = 100.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 20.dp else 24.dp)
         ) {
@@ -152,7 +148,6 @@ fun CardStackTestScreen(
                 )
             }
 
-            // CardStack - 남은 공간을 모두 사용
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -161,15 +156,17 @@ fun CardStackTestScreen(
             ) {
                 if (currentItems.isNotEmpty()) {
                     DraggableCardStack(
-                        initialItems = currentItems,
+                        items = currentItems,
                         height = cardHeight,
                         cardSpacingRatio = if (isSmallScreen) 0.08f else 0.1f,
                         cardAlignment = CardAlignment.BOTTOM,
                         dragAlignment = DragAlignment.HORIZONTAL,
                         onSwipeLeft = { item ->
+                            lastSwipedItem = item
                             viewModel.onSwipeLeft(item)
                         },
                         onSwipeRight = { item ->
+                            lastSwipedItem = item
                             viewModel.onSwipeRight(item)
                         }
                     ) { fashionItem ->

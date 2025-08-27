@@ -22,28 +22,42 @@ enum class CardAlignment { BOTTOM, BOTTOM_START, BOTTOM_END, TOP, TOP_START, TOP
  */
 enum class DragAlignment { VERTICAL, HORIZONTAL, NONE }
 
-/**
- * 속도와 오프셋을 기반으로 스와이프 방향을 결정합니다
- */
 internal fun determineSwipeDirection(velocity: Velocity, offset: Offset): DragDirection? {
-    val isHorizontal = velocity.x.absoluteValue > velocity.y.absoluteValue
+    val minVelocity = 50f
+    val minOffset = 30f
+
     return when {
-        isHorizontal && velocity.x > 0 && offset.x > 0 -> DragDirection.RIGHT
-        isHorizontal && velocity.x < 0 && offset.x < 0 -> DragDirection.LEFT
-        !isHorizontal && velocity.y > 0 && offset.y > 0 -> DragDirection.DOWN
-        !isHorizontal && velocity.y < 0 && offset.y < 0 -> DragDirection.UP
+        // 오른쪽 스와이프 (좋아요)
+        (velocity.x > minVelocity && offset.x > minOffset) ||
+                (velocity.x.absoluteValue < minVelocity * 2 && offset.x > minOffset * 3) -> DragDirection.RIGHT
+
+        // 왼쪽 스와이프 (싫어요) - 동일한 조건으로 설정
+        (velocity.x < -minVelocity && offset.x < -minOffset) ||
+                (velocity.x.absoluteValue < minVelocity * 2 && offset.x < -minOffset * 3) -> DragDirection.LEFT
+
+        // 아래쪽 스와이프
+        (velocity.y > minVelocity && offset.y > minOffset) ||
+                (velocity.y.absoluteValue < minVelocity * 2 && offset.y > minOffset * 3) -> DragDirection.DOWN
+
+        // 위쪽 스와이프
+        (velocity.y < -minVelocity && offset.y < -minOffset) ||
+                (velocity.y.absoluteValue < minVelocity * 2 && offset.y < -minOffset * 3) -> DragDirection.UP
+
         else -> null
     }
 }
 
 /**
- * 스와이프 속도가 임계값을 초과하는지 확인합니다
+ * 스와이프 속도가 임계값을 초과하는지 확인
  */
-internal fun isSwipeVelocityExceeded(velocity: Velocity, velocityThresholdPx: Float): Boolean =
-    velocity.x.absoluteValue > velocityThresholdPx || velocity.y.absoluteValue > velocityThresholdPx
+internal fun isSwipeVelocityExceeded(velocity: Velocity, velocityThresholdPx: Float): Boolean {
+    // 임계값을 더 낮춰서 더 쉽게 스와이프되도록
+    val adjustedThreshold = velocityThresholdPx * 0.5f
+    return velocity.x.absoluteValue > adjustedThreshold || velocity.y.absoluteValue > adjustedThreshold
+}
 
 /**
- * 스와이프 방향에 따른 목표 오프셋을 계산합니다
+ * 스와이프 방향에 따른 목표 오프셋을 계산
  */
 internal fun calculateTargetOffset(
     direction: DragDirection,
@@ -58,7 +72,7 @@ internal fun calculateTargetOffset(
 }
 
 /**
- * 카드 정렬에 따른 세로 오프셋을 계산합니다
+ * 카드 정렬에 따른 세로 오프셋을 계산
  */
 internal fun calculateVerticalOffset(
     cardAlignment: CardAlignment,
@@ -70,7 +84,7 @@ internal fun calculateVerticalOffset(
 }
 
 /**
- * 스와이프 진행도를 -1과 1 사이의 정규화된 값으로 계산합니다
+ * 스와이프 진행도를 -1과 1 사이의 정규화된 값으로 계산
  */
 internal fun calculateSwipeProgress(offset: Offset, velocityThresholdPx: Float): Float {
     val xProgress = offset.x / velocityThresholdPx
@@ -82,21 +96,24 @@ internal fun calculateSwipeProgress(offset: Offset, velocityThresholdPx: Float):
 }
 
 /**
- * 스택 내 각 카드의 스케일 팩터를 계산합니다
+ * 스택 내 각 카드의 스케일 팩터를 계산
  */
 internal fun calculateScales(index: Int, itemCount: Int, stackDragProgress: Float): Float {
     val baseScale = 1f - (index * 0.05f)
-    val scaleIncrement = 0.05f * stackDragProgress
+
+    // 좌우 스와이프 모두 동일하게 처리 (절댓값 사용)
+    val scaleIncrement = 0.05f * kotlin.math.abs(stackDragProgress)
+
     return when {
         index > 0 -> baseScale + (scaleIncrement * (itemCount - index - 1))
-            .coerceAtMost(.05f)
+            .coerceAtMost(0.05f)
 
         else -> baseScale
     }
 }
 
 /**
- * 스택 내 위치에 따른 카드의 초기 오프셋을 계산합니다
+ * 스택 내 위치에 따른 카드의 초기 오프셋을 계산
  */
 internal fun calculateLastOffset(
     cardAlignment: CardAlignment,
@@ -104,17 +121,17 @@ internal fun calculateLastOffset(
     spacingPx: Float
 ): Offset = when (cardAlignment) {
     CardAlignment.TOP -> Offset(0f, spacingPx * index)
-    CardAlignment.TOP_START -> Offset(-spacingPx * index, spacingPx * index)
-    CardAlignment.TOP_END -> Offset(spacingPx * index, spacingPx * index)
-    CardAlignment.BOTTOM -> Offset(0f, -spacingPx * index)
-    CardAlignment.BOTTOM_START -> Offset(-spacingPx * index, -spacingPx * index)
-    CardAlignment.BOTTOM_END -> Offset(spacingPx * index, -spacingPx * index)
+    CardAlignment.TOP_START -> Offset(-spacingPx * index * 0.3f, spacingPx * index)
+    CardAlignment.TOP_END -> Offset(spacingPx * index * 0.3f, spacingPx * index)
+    CardAlignment.BOTTOM -> Offset(0f, -spacingPx * index) // 더 명확한 간격
+    CardAlignment.BOTTOM_START -> Offset(-spacingPx * index * 0.3f, -spacingPx * index)
+    CardAlignment.BOTTOM_END -> Offset(spacingPx * index * 0.3f, -spacingPx * index)
     CardAlignment.START -> Offset(-spacingPx * index, 0f)
     CardAlignment.END -> Offset(spacingPx * index, 0f)
 }
 
 /**
- * 드래그 중 스택 구성에 따른 오프셋을 계산합니다
+ * 드래그 중 스택 구성에 따른 오프셋을 계산
  */
 internal fun calculateDragBasedOffset(
     stackDragProgress: Float,
@@ -123,21 +140,23 @@ internal fun calculateDragBasedOffset(
     itemCount: Int,
     cardAlignment: CardAlignment
 ): Offset {
-    val progress = if (index == itemCount - 1 && stackDragProgress < 0f) {
-        (-stackDragProgress).coerceIn(0f, 1f)
+    val progress = if (index > 0 && kotlin.math.abs(stackDragProgress) > 0f) {
+        // 스와이프 진행도에 따라 뒤 카드들이 점진적으로 앞으로 이동
+        (kotlin.math.abs(stackDragProgress) * (1f - (index.toFloat() / itemCount))).coerceIn(0f, 1f)
     } else {
-        (stackDragProgress * (1f - (index.toFloat() / itemCount))).coerceIn(-1f, 1f)
+        // 첫 번째 카드일 때는 움직임 없음
+        0f
     }
 
-    val easedProgress = progress * progress * (3 - 2 * progress)
+    val easedProgress = if (progress > 0f) {
+        progress * progress * (3f - 2f * progress)
+    } else {
+        0f
+    }
 
     return when (cardAlignment) {
-        CardAlignment.TOP -> Offset(
-            0f,
-            spacingPx * easedProgress * if (index == itemCount - 1 && stackDragProgress < 0f) 1f else -1f
-        )
-
-        CardAlignment.BOTTOM -> Offset(0f, spacingPx * easedProgress)
+        CardAlignment.TOP -> Offset(0f, -spacingPx * easedProgress)
+        CardAlignment.BOTTOM -> Offset(0f, spacingPx * easedProgress) // 아래에서 위로 이동
         CardAlignment.TOP_START -> Offset(spacingPx * easedProgress, -spacingPx * easedProgress)
         CardAlignment.BOTTOM_START -> Offset(spacingPx * easedProgress, spacingPx * easedProgress)
         CardAlignment.TOP_END -> Offset(-spacingPx * easedProgress, -spacingPx * easedProgress)
@@ -148,7 +167,7 @@ internal fun calculateDragBasedOffset(
 }
 
 /**
- * 카드 정렬에 따른 변형 조정을 적용합니다
+ * 카드 정렬에 따른 변형 조정을 적용
  */
 internal fun GraphicsLayerScope.applyAlignmentAdjustment(
     cardAlignment: CardAlignment,
