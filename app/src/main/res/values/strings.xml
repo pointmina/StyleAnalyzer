@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">StyleAnalyzer</string>
+
+    <!-- CardStack Test Screen -->
+    <string name="swipe_instruction">좌우로 스와이프하여 선호도를 표시하세요</string>
+    <string name="like">좋아요</string>
+    <string name="dislike">싫어요</string>
+    <string name="last_selection">마지막 선택</string>
+    <string name="all_items_completed">모든 아이템을 확인했습니다!</string>
+    <string name="swipe_left">← 싫어요</string>
+    <string name="swipe_right">좋아요 →</string>
+    <string name="swipe_to_select">스와이프하여 선택</string>
+
+    <!-- Fashion Categories -->
+    <string name="category_top">상의</string>
+    <string name="category_bottom">하의</string>
+    <string name="category_outer">아우터</string>
+    <string name="category_dress">원피스</string>
+    <string name="category_shoes">신발</string>
+    <string name="category_bag">가방</string>
+    <string name="category_accessory">악세서리</string>
+    <string name="category_hat">모자</string>
 </resources>
