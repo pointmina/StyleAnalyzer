@@ -1,6 +1,8 @@
 package com.hanto.styleanalyzer.presentation.ui.cardstack
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -32,24 +34,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.hanto.styleanalyzer.R
 import com.hanto.styleanalyzer.data.sample.SampleData
 import com.hanto.styleanalyzer.domain.model.FashionItem
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.CardAlignment
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.DragAlignment
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.DraggableCardStack
+import com.hanto.styleanalyzer.presentation.ui.theme.MinimalColors
 
-/**
- * CardStack 테스트 화면
- * 패션 아이템들을 스와이프할 수 있는 카드 스택으로 표시합니다
- */
+
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun CardStackTestScreen(
@@ -60,30 +59,34 @@ fun CardStackTestScreen(
     var currentItems by remember { mutableStateOf(SampleData.getShuffledItems()) }
     var lastSwipedItem by remember { mutableStateOf<FashionItem?>(null) }
 
-    // 간단한 반응형 설정
+    // 반응형 설정
     val configuration = LocalConfiguration.current
     val isSmallScreen = configuration.screenWidthDp < 360
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    val horizontalPadding = if (isSmallScreen) 12.dp else 16.dp
+    val horizontalPadding = if (isSmallScreen) 16.dp else 20.dp
     val cardHeight = when {
-        isLandscape -> 280.dp
-        isSmallScreen -> 250.dp
-        else -> 320.dp
+        isLandscape -> 320.dp
+        isSmallScreen -> 280.dp
+        else -> 360.dp
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         // 메인 컨텐츠
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
                     horizontal = horizontalPadding,
-                    vertical = 16.dp
+                    vertical = 20.dp
                 )
-                .padding(bottom = 80.dp), // 하단 도움말 공간 확보
+                .padding(bottom = 100.dp), // 하단 도움말 공간 확보
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 16.dp else 20.dp)
+            verticalArrangement = Arrangement.spacedBy(if (isSmallScreen) 20.dp else 24.dp)
         ) {
             // 헤더
             Column(
@@ -93,17 +96,18 @@ fun CardStackTestScreen(
                 Text(
                     text = "StyleAnalyzer",
                     style = if (isSmallScreen) {
-                        MaterialTheme.typography.headlineMedium
-                    } else {
                         MaterialTheme.typography.headlineLarge
+                    } else {
+                        MaterialTheme.typography.displaySmall
                     },
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.5).sp
                 )
                 if (!isSmallScreen) {
                     Text(
-                        text = "좌우로 스와이프하여 선호도를 표시하세요",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "당신의 패션 취향을 분석합니다",
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
@@ -113,66 +117,45 @@ fun CardStackTestScreen(
             // 통계 표시
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StatCard(
-                    icon = Icons.Default.FavoriteBorder,
+                    icon = Icons.Default.Close,
                     count = dislikeCount,
-                    label = "싫어요",
-                    color = MaterialTheme.colorScheme.error,
-                    isCompact = isSmallScreen
+                    label = "PASS",
+                    color = MinimalColors.AccentRed,
+                    isCompact = isSmallScreen,
+                    modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     icon = Icons.Default.Favorite,
                     count = likeCount,
-                    label = "좋아요",
-                    color = MaterialTheme.colorScheme.primary,
-                    isCompact = isSmallScreen
+                    label = "LIKE",
+                    color = MinimalColors.AccentGreen,
+                    isCompact = isSmallScreen,
+                    modifier = Modifier.weight(1f)
                 )
             }
 
-            // 마지막 스와이프한 아이템 정보 (작은 화면에서는 숨김)
-            if (!isSmallScreen && lastSwipedItem != null) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = "마지막 선택",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = lastSwipedItem!!.description ?: "패션 아이템",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = "${lastSwipedItem!!.category.name} • ${
-                                lastSwipedItem!!.styles.joinToString(
-                                    ", "
-                                )
-                            }",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                }
+            // 진행률 표시
+            if (!isSmallScreen) {
+                val totalItems = SampleData.sampleFashionItems.size
+                val processedItems = likeCount + dislikeCount
+                val progress = if (totalItems > 0) processedItems.toFloat() / totalItems else 0f
+
+                ProgressIndicator(
+                    progress = progress,
+                    processedItems = processedItems,
+                    totalItems = totalItems
+                )
             }
 
             // CardStack - 남은 공간을 모두 사용
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f), // 핵심: 남은 공간을 모두 차지
+                    .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 if (currentItems.isNotEmpty()) {
@@ -191,7 +174,7 @@ fun CardStackTestScreen(
                             lastSwipedItem = item
                         }
                     ) { fashionItem ->
-                        FashionItemCard(
+                        FashionCard(
                             fashionItem = fashionItem,
                             isCompact = isSmallScreen
                         )
@@ -214,13 +197,13 @@ fun CardStackTestScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = horizontalPadding)
-                .padding(bottom = 16.dp)
+                .padding(bottom = 20.dp)
         )
     }
 }
 
 /**
- * 간단한 통계 카드
+ * 통계 카드
  */
 @Composable
 private fun StatCard(
@@ -234,11 +217,17 @@ private fun StatCard(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.1f)
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(if (isCompact) 12.dp else 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = if (isCompact) 20.dp else 24.dp,
+                    vertical = if (isCompact) 12.dp else 16.dp
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(if (isCompact) 6.dp else 8.dp)
         ) {
@@ -251,35 +240,80 @@ private fun StatCard(
             Text(
                 text = count.toString(),
                 style = if (isCompact) {
-                    MaterialTheme.typography.titleMedium
-                } else {
                     MaterialTheme.typography.titleLarge
+                } else {
+                    MaterialTheme.typography.headlineSmall
                 },
                 color = color,
                 fontWeight = FontWeight.Bold
             )
-            if (!isCompact) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = color
-                )
-            }
+            Text(
+                text = label,
+                style = if (isCompact) {
+                    MaterialTheme.typography.labelMedium
+                } else {
+                    MaterialTheme.typography.labelLarge
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
 
 /**
- * 간단한 패션 아이템 카드
+ * 진행률 표시 컴포넌트
+ */
+@Composable
+private fun ProgressIndicator(
+    progress: Float,
+    processedItems: Int,
+    totalItems: Int
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // 진행률 바
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(2.dp)
+                )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress)
+                    .height(4.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            )
+        }
+
+        Text(
+            text = "${processedItems}/${totalItems}",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * 패션 아이템 카드
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun FashionItemCard(
+private fun FashionCard(
     fashionItem: FashionItem,
     isCompact: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val cornerRadius = if (isCompact) 10.dp else 12.dp
+    val cornerRadius = if (isCompact) 12.dp else 16.dp
 
     Card(
         modifier = modifier.fillMaxSize(),
@@ -287,9 +321,10 @@ private fun FashionItemCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            // 이미지
             GlideImage(
                 model = fashionItem.imageUrl,
                 contentDescription = fashionItem.description,
@@ -300,47 +335,74 @@ private fun FashionItemCard(
             )
 
             // 하단 정보 오버레이
-            Card(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter),
-                shape = RoundedCornerShape(
-                    topStart = 0.dp,
-                    topEnd = 0.dp,
-                    bottomStart = cornerRadius,
-                    bottomEnd = cornerRadius
-                ),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.Black.copy(alpha = 0.7f)
-                )
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.85f),
+                        shape = RoundedCornerShape(
+                            topStart = 0.dp,
+                            topEnd = 0.dp,
+                            bottomStart = cornerRadius,
+                            bottomEnd = cornerRadius
+                        )
+                    )
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(if (isCompact) 12.dp else 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .padding(if (isCompact) 16.dp else 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = fashionItem.description ?: "패션 아이템",
+                        text = fashionItem.description ?: "Fashion Item",
                         style = if (isCompact) {
-                            MaterialTheme.typography.titleSmall
-                        } else {
                             MaterialTheme.typography.titleMedium
+                        } else {
+                            MaterialTheme.typography.titleLarge
                         },
                         color = Color.White,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.SemiBold
                     )
+
                     if (!isCompact) {
                         Text(
-                            text = "${fashionItem.category.name} • ${fashionItem.brand ?: "브랜드"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
+                            text = fashionItem.brand ?: "BRAND",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MinimalColors.SoftGray,
+                            fontWeight = FontWeight.Medium
                         )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = fashionItem.styles.joinToString(" • "),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            text = fashionItem.category.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier
+                                .background(
+                                    color = MinimalColors.White.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         )
+
+                        if (!isCompact && fashionItem.styles.isNotEmpty()) {
+                            Text(
+                                text = "•",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = fashionItem.styles.first().name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
                     }
                 }
             }
@@ -362,40 +424,108 @@ private fun CompletionCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(cardHeight),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (isCompact) 16.dp else 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .background(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+                )
         ) {
-            Text(
-                text = "모든 아이템을 확인했습니다!",
-                style = if (isCompact) {
-                    MaterialTheme.typography.headlineSmall
-                } else {
-                    MaterialTheme.typography.headlineMedium
-                },
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "좋아요: ${likeCount}개\n싫어요: ${dislikeCount}개",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(if (isCompact) 20.dp else 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "STYLE TEST",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "COMPLETED",
+                    style = if (isCompact) {
+                        MaterialTheme.typography.headlineMedium
+                    } else {
+                        MaterialTheme.typography.headlineLarge
+                    },
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 1.sp
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = likeCount.toString(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MinimalColors.AccentGreen,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "LIKES",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Text(
+                        text = "/",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = dislikeCount.toString(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MinimalColors.AccentRed,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "PASS",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                if (!isCompact) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "분석 결과를 확인해보세요",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }
 
 /**
- * 하단 고정 도움말 카드
+ * 하단 도움말 카드
  */
 @Composable
 private fun HelpCard(
@@ -404,68 +534,90 @@ private fun HelpCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.9f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(if (isCompact) 12.dp else 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .background(
+                    color = MaterialTheme.colorScheme.primary
+                )
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(if (isCompact) 6.dp else 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(if (isCompact) 16.dp else 20.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = stringResource(R.string.dislike),
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(if (isCompact) 16.dp else 18.dp)
-                )
-                Text(
-                    text = "← 싫어요",
-                    style = if (isCompact) {
-                        MaterialTheme.typography.labelSmall
-                    } else {
-                        MaterialTheme.typography.labelMedium
-                    },
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+                // 왼쪽 스와이프 안내
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(if (isCompact) 8.dp else 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Pass",
+                        tint = MinimalColors.AccentRed,
+                        modifier = Modifier
+                            .size(if (isCompact) 18.dp else 20.dp)
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .padding(2.dp)
+                    )
+                    Text(
+                        text = if (isCompact) "PASS" else "← PASS",
+                        style = if (isCompact) {
+                            MaterialTheme.typography.labelMedium
+                        } else {
+                            MaterialTheme.typography.labelLarge
+                        },
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-            if (!isCompact) {
-                Text(
-                    text = stringResource(R.string.swipe_to_select),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                // 중앙 구분선
+                Box(
+                    modifier = Modifier
+                        .size(width = 1.dp, height = if (isCompact) 20.dp else 24.dp)
+                        .background(Color.White.copy(alpha = 0.3f))
                 )
-            }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(if (isCompact) 6.dp else 8.dp)
-            ) {
-                Text(
-                    text = "좋아요 →",
-                    style = if (isCompact) {
-                        MaterialTheme.typography.labelSmall
-                    } else {
-                        MaterialTheme.typography.labelMedium
-                    },
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    fontWeight = FontWeight.Medium
-                )
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = stringResource(R.string.like),
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(if (isCompact) 16.dp else 18.dp)
-                )
+                // 오른쪽 스와이프 안내
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(if (isCompact) 8.dp else 12.dp)
+                ) {
+                    Text(
+                        text = if (isCompact) "LIKE" else "LIKE →",
+                        style = if (isCompact) {
+                            MaterialTheme.typography.labelMedium
+                        } else {
+                            MaterialTheme.typography.labelLarge
+                        },
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Like",
+                        tint = MinimalColors.AccentGreen,
+                        modifier = Modifier
+                            .size(if (isCompact) 18.dp else 20.dp)
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .padding(2.dp)
+                    )
+                }
             }
         }
     }
