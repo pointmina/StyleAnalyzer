@@ -22,10 +22,3 @@ app/
 ├── di/            # Dependency Injection
 └── util/          # Utility functions
 ```
-## Contributing
-
-Please submit issues or pull requests for contributions.
-
-## Contact
-
-For development inquiries, please create an issue.
