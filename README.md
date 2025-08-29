@@ -22,6 +22,6 @@ app/
 ├── data/           # Data layer (Repository, Database, API)
 ├── domain/         # Domain layer (UseCase, Model)
 ├── presentation/   # Presentation layer (UI, ViewModel)
-├── di/            # Dependency Injection
-└── util/          # Utility functions
+├── di/             # Dependency Injection
+└── util/           # Utility functions
 ```
