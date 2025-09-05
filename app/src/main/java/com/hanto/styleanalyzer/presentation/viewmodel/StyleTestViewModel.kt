@@ -2,8 +2,10 @@ package com.hanto.styleanalyzer.presentation.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import com.hanto.styleanalyzer.data.sample.SampleData
 import com.hanto.styleanalyzer.domain.model.FashionItem
@@ -21,7 +23,7 @@ class StyleTestViewModel @Inject constructor() : ViewModel() {
     var currentSession by mutableStateOf(createNewSession())
         private set
 
-    var displayItems by mutableStateOf(SampleData.getShuffledItems())
+    var displayItems: SnapshotStateList<FashionItem> = mutableStateListOf()
         private set
 
     // 테스트 완료 여부
@@ -37,6 +39,7 @@ class StyleTestViewModel @Inject constructor() : ViewModel() {
         get() = currentSession.dislikeCount
 
     init {
+        displayItems.addAll(SampleData.getShuffledItems())
         Log.d(TAG, "ViewModel 초기화 - 총 아이템 수: ${displayItems.size}")
         displayItems.forEachIndexed { index, item ->
             Log.d(TAG, "아이템 [$index]: ${item.description} (ID: ${item.id})")
@@ -96,7 +99,7 @@ class StyleTestViewModel @Inject constructor() : ViewModel() {
             )
 
             val itemsBeforeRemoval = displayItems.size
-            displayItems = displayItems.filterNot { it.id == item.id }
+            displayItems.removeIf { it.id == item.id }
             val itemsAfterRemoval = displayItems.size
 
             // 완료 상태 체크
@@ -117,7 +120,8 @@ class StyleTestViewModel @Inject constructor() : ViewModel() {
      */
     fun restartTest() {
         Log.d(TAG, "테스트 재시작")
-        displayItems = SampleData.getShuffledItems()
+        displayItems.clear()
+        displayItems.addAll(SampleData.getShuffledItems())
         currentSession = createNewSession()
         Log.d(TAG, "재시작 완료 - 아이템 수: ${displayItems.size}")
     }
