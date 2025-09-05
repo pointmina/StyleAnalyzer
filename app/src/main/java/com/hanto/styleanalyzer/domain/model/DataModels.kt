@@ -107,7 +107,6 @@ enum class SwipeType {
 data class SwipeAction(
     val id: String = generateActionId(),
     val itemId: String,
-    val item: FashionItem,
     val action: SwipeType,
     val sessionId: String,
     val timestamp: Long = System.currentTimeMillis()

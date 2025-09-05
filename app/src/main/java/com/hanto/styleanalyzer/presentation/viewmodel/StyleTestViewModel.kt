@@ -58,7 +58,7 @@ class StyleTestViewModel @Inject constructor() : ViewModel() {
     fun onSwipeRight(item: FashionItem) {
         Log.d(TAG, "좋아요 스와이프 - 아이템: ${item.description} (ID: ${item.id})")
         Log.d(TAG, "스와이프 전 남은 아이템 수: ${displayItems.size}")
-        processSwipeAction(item, SwipeType.LIKE)
+        processSwipeAction(item.id, SwipeType.LIKE)
         Log.d(TAG, "스와이프 후 남은 아이템 수: ${displayItems.size}")
     }
 
@@ -68,24 +68,27 @@ class StyleTestViewModel @Inject constructor() : ViewModel() {
     fun onSwipeLeft(item: FashionItem) {
         Log.d(TAG, "싫어요 스와이프 - 아이템: ${item.description} (ID: ${item.id})")
         Log.d(TAG, "스와이프 전 남은 아이템 수: ${displayItems.size}")
-        processSwipeAction(item, SwipeType.DISLIKE)
+        processSwipeAction(item.id, SwipeType.DISLIKE)
         Log.d(TAG, "스와이프 후 남은 아이템 수: ${displayItems.size}")
     }
 
     /**
      * 스와이프 액션 처리 - 개선된 로직 및 로깅
      */
-    private fun processSwipeAction(item: FashionItem, action: SwipeType) {
+    private fun processSwipeAction(itemId: String, action: SwipeType) {
         try {
             // 현재 상태 로그
             Log.d(TAG, "processSwipeAction 시작")
-            Log.d(TAG, "처리할 아이템 ID: ${item.id}")
+            Log.d(TAG, "처리할 아이템 ID: $itemId")
             Log.d(TAG, "현재 displayItems: ${displayItems.map { "${it.id}-${it.description}" }}")
+
+            val item = displayItems.find { it.id == itemId }
+                ?: throw IllegalArgumentException("Item not found: $itemId")
+            Log.d(TAG, "처리할 아이템: ${item.description}")
 
             // 스와이프 액션 생성
             val swipeAction = SwipeAction(
-                itemId = item.id,
-                item = item,
+                itemId = itemId,
                 action = action,
                 sessionId = currentSession.sessionId
             )
@@ -95,9 +98,7 @@ class StyleTestViewModel @Inject constructor() : ViewModel() {
                 swipeActions = currentSession.swipeActions + swipeAction
             )
 
-            val itemsBeforeRemoval = displayItems.size
-            displayItems = displayItems.filterNot { it.id == item.id }
-            val itemsAfterRemoval = displayItems.size
+            displayItems = displayItems.filterNot { it.id == itemId }
 
             // 완료 상태 체크
             if (displayItems.isEmpty()) {
