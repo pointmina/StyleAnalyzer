@@ -45,13 +45,14 @@ import com.hanto.styleanalyzer.presentation.ui.common.cardstack.DragAlignment
 import com.hanto.styleanalyzer.presentation.ui.common.cardstack.DraggableCardStack
 import com.hanto.styleanalyzer.presentation.ui.theme.MinimalColors
 import com.hanto.styleanalyzer.presentation.viewmodel.StyleTestViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun CardStackTestScreen(
     modifier: Modifier = Modifier,
-    viewModel: StyleTestViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: StyleTestViewModel = hiltViewModel()
 ) {
     val currentItems = viewModel.displayItems
     val currentSession = viewModel.currentSession
